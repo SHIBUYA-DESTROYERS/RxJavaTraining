@@ -11,7 +11,7 @@ class DatabaseDownloadSelectDialog {
         builder.setTitle("処理を選択して下さい");
 
         String[] items = {"not RxJava", "just only", "defer", "fromCallable"};
-        builder.setSingleChoiceItems(items, 0, mItemListener);
+        builder.setSingleChoiceItems(items, selectBtnNumber, mItemListener);
 
         builder.setPositiveButton("OK", mButtonListener );
         builder.setNeutralButton ("Cancel", mButtonListener );

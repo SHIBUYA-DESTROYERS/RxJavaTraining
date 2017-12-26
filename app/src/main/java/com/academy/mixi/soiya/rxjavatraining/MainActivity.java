@@ -11,6 +11,7 @@ import java.io.IOException;
 
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.observers.DisposableObserver;
 import io.reactivex.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
@@ -40,8 +41,9 @@ public class MainActivity extends AppCompatActivity {
         actionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                resultTextView.setText("");
                 switch (DatabaseDownloadSelectDialog.selectBtnNumber) {
-                    // not RxJava
+                    // マルチスレッドでないコード
                     case 0:
                         showProgress();
                         try {
@@ -53,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
                         hideProgress();
                         break;
 
-                    // just only
+                    // rxを利用したものの仕様を理解してないコード
                     case 1:
                         showProgress();
                         try {
@@ -69,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                         break;
 
-                    // defer
+                    // rxの仕様を理解したコード (defer編)
                     case 2:
                         showProgress();
                         Observable<String> deferred = Observable.defer(() -> {
@@ -82,23 +84,52 @@ public class MainActivity extends AppCompatActivity {
 
                         deferred.subscribeOn(Schedulers.io())
                                 .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe(value -> {
-                                    resultTextView.setText(value);
-                                    hideProgress();
+                                .subscribe(new DisposableObserver<String>() {
+
+                                    @Override
+                                    public void onNext(String s) {
+                                        resultTextView.setText(s);
+                                        hideProgress();
+                                    }
+
+                                    @Override
+                                    public void onError(Throwable e) {
+                                        hideProgress();
+                                    }
+
+                                    @Override
+                                    public void onComplete() {
+
+                                    }
                                 });
                         break;
 
-                    // fromCallable
+                    // rxの仕様を理解したコード (fromCallable編)
                     case 3:
                         showProgress();
                         Observable<String> fromCallable = Observable.fromCallable(Database::readValue);
 
                         fromCallable.subscribeOn(Schedulers.io())
                                 .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe(value -> {
-                                    resultTextView.setText(value);
-                                    hideProgress();
+                                .subscribe(new DisposableObserver<String>() {
+
+                                    @Override
+                                    public void onNext(String s) {
+                                        resultTextView.setText(s);
+                                        hideProgress();
+                                    }
+
+                                    @Override
+                                    public void onError(Throwable e) {
+                                        hideProgress();
+                                    }
+
+                                    @Override
+                                    public void onComplete() {
+
+                                    }
                                 });
+                        break;
                 }
             }
         });
